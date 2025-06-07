@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>学习打卡</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 50px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 18px;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 20px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h1>学习打卡</h1>
+  <p id="time"></p>
+  <button onclick="startStudy()">开始打卡</button>
+  <button onclick="endStudy()">结束打卡</button>
+
+  <div id="status"></div>
+  <p>今日累计学习时长：<span id="todayTime">0</span> 分钟</p>
+  <p>总累计学习时长：<span id="totalTime">0</span> 分钟</p>
+
+  <audio id="alertSound" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="auto"></audio>
+
+  <script>
+    let startTime = null;
+    let todayTime = parseInt(localStorage.getItem('todayTime')) || 0;
+    let totalTime = parseInt(localStorage.getItem('totalTime')) || 0;
+
+    document.getElementById('todayTime').textContent = todayTime;
+    document.getElementById('totalTime').textContent = totalTime;
+
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('time').textContent = '🕓：' + now.toLocaleString();
+
+      // 每晚22:00提醒
+      if (now.getHours() === 22 && now.getMinutes() === 0 && !localStorage.getItem('alerted')) {
+        const message = todayTime >= 180 ?
+          '太棒了，今日学习达标啦！' :
+          '今日学习时长不达标，你又开始偷懒了？？？';
+        alert(message);
+        document.getElementById('alertSound').play();
+        localStorage.setItem('alerted', 'true');
+      }
+      // 每天0点重置今日时间和提醒状态
+      if (now.getHours() === 0 && now.getMinutes() === 0) {
+        localStorage.setItem('todayTime', '0');
+        localStorage.removeItem('alerted');
+      }
+    }
+
+    setInterval(updateTime, 1000);
+
+    function startStudy() {
+      startTime = Date.now();
+      document.getElementById('status').textContent = '学习中...';
+    }
+
+    function endStudy() {
+      if (!startTime) {
+        alert('请先点击开始打卡');
+        return;
+      }
+      const endTime = Date.now();
+      const durationMin = Math.round((endTime - startTime) / 60000); // 分钟
+
+      todayTime += durationMin;
+      totalTime += durationMin;
+      localStorage.setItem('todayTime', todayTime);
+      localStorage.setItem('totalTime', totalTime);
+
+      document.getElementById('todayTime').textContent = todayTime;
+      document.getElementById('totalTime').textContent = totalTime;
+      document.getElementById('status').textContent = `本次学习了 ${durationMin} 分钟。`;
+
+      startTime = null;
+    }
+  </script>
+</body>
+</html>
